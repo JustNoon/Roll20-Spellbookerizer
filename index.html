@@ -50,11 +50,10 @@ findSpell = function(findMe) {
 				if (_.isUndefined(foundObj.CLASSES))
 					foundObj.CLASSES = '';
 				else
-					foundObj.CLASSES += ',';
-				let reg3 = /(.*?)=(\d)(?:\||$)/g;
+					foundObj.CLASSES += ', ';
+				let reg3 = /(.*?)=(\d)(?:\||$)/g, reg3Results;
 				while ((reg3Results = reg3.exec(results[2])) !== null)
-					foundObj[results[1]] += ;;;;;;;;
-				
+					foundObj[results[1]] += reg3Results[1].split(',').join(' ' + reg3Results[2] + ', ') + ' ' + reg3Results[2];				
 			}
 			else if (foundObj[results[1]] != undefined)
 				foundObj[results[1]] += ', ' + results[2];
@@ -62,7 +61,8 @@ findSpell = function(findMe) {
 				foundObj[results[1]] = results[2];
 		}
 	});
-	console.log(foundObj);
+	//foundObj.CLASSES = foundObj.CLASSES.substr(2);
+	//console.log(foundObj);
 	window.foundObj = foundObj;
 	
 	var fillArea = document.getElementById('spellArea');
