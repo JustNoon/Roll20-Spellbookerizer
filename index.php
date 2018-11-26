@@ -1,0 +1,98 @@
+<html>
+<head>
+<script src="hugeList.js"></script>
+<script src="https://underscorejs.org/underscore-min.js"></script>
+<script>
+dziemba_levenshtein = function(a, b){
+	var tmp;
+	if (a.length === 0) { return b.length; }
+	if (b.length === 0) { return a.length; }
+	if (a.length > b.length) { tmp = a; a = b; b = tmp; }
+
+	var i, j, res, alen = a.length, blen = b.length, row = Array(alen);
+	for (i = 0; i <= alen; i++) { row[i] = i; }
+
+	for (i = 1; i <= blen; i++) {
+		res = i;
+		for (j = 1; j <= alen; j++) {
+			tmp = row[j - 1];
+			row[j - 1] = res;
+			res = b[i - 1] === a[j - 1] ? tmp : Math.min(tmp + 1, Math.min(res + 1, row[j] + 1));
+		}
+	}
+	return res;
+}
+
+function escapeRegExp(text) {
+  return text.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+}
+
+spellList = function() {
+_.each(document.getElementById('inputArea').value.split('\n'), o => {findSpell(o)});
+};
+
+findSpell = function(findMe) {
+	var search = findMe;
+	var allSpells = hugeList.match(/^([^#].*?)(?:.MOD)?\t/gm);
+	allSpells = _.map(allSpells, o => o.trim());
+	search = _.min(allSpells, o => dziemba_levenshtein(o, search));
+
+	var regex = new RegExp('^' + escapeRegExp(search) + '(?:.MOD)?\t(.*)', 'gm'), matches = hugeList.match(regex), foundObj = {'NAME': search};
+	console.log(matches);
+	_.each(matches, function(o) {
+		let reg2 = /([A-Z]*):(.*?)(?:[\t\n]|$)/gm, results;
+		while ((results = reg2.exec(o)) !== null) {
+			if (results[1] == 'DESC' && foundObj.DESC != undefined) {
+				foundObj.FULLDESC = (results[2].length > foundObj.DESC.length ? results[2] : foundObj.DESC);
+				foundObj.DESC = (results[2].length > foundObj.DESC.length ? foundObj.DESC : results[2]);
+			}
+			else if (results[1] == 'CLASSES') {
+				if (_.isUndefined(foundObj.CLASSES))
+					foundObj.CLASSES = '';
+				else
+					foundObj.CLASSES += ',';
+				let reg3 = /(.*?)=(\d)(?:\||$)/g;
+				while ((reg3Results = reg3.exec(results[2])) !== null)
+					foundObj[results[1]] += ;;;;;;;;
+				
+			}
+			else if (foundObj[results[1]] != undefined)
+				foundObj[results[1]] += ', ' + results[2];
+			else
+				foundObj[results[1]] = results[2];
+		}
+	});
+	console.log(foundObj);
+	window.foundObj = foundObj;
+	
+	var fillArea = document.getElementById('spellArea');
+	fillArea.value += JSON.stringify(foundObj) + '\n';
+	
+/*
+	fillArea.innerHTML = `\
+<!--${JSON.stringify(foundObj)}-->
+<h1>${search}<h1>
+<h5>${foundObj['DESC']}<\/h5>
+<b>School<\/b> ${foundObj['SCHOOL']} (${foundObj['SUBSCHOOL']}) <b>Level<\/b> ${foundObj['CLASSES']}
+<div style="border-width: 1px 0px;border-style: solid;border-color:#000;">CASTING<\/div>
+<div><b>Casting Time<\/b> ${foundObj['CASTTIME']}<br>
+<b>Components<\/b> ${foundObj['COMPS']}<\/div>
+<div style="border-width: 1px 0px;border-style: solid;border-color:#000;">EFFECT<\/div>
+<div><b>Range<\/b> ${foundObj['RANGE']}<br>
+<b>Target<\/b> ${foundObj['TARGETAREA']}<br>
+<b>Duration<\/b> ${foundObj['DURATION']}<br>
+<b>Saving Throw<\/b> ${foundObj['SAVEINFO']} <b>Spell Resistance<\/b> ${foundObj['SPELLRES']}<\/div>
+<div style="border-width: 1px 0px;border-style: solid;border-color:#000;">Description<\/div>
+<div>${foundObj['FULLDESC']}<\/div>\
+`;*/
+}
+</script>
+</head>
+<body>
+<textarea id="inputArea"></textarea>
+<button onclick="spellList()">Find Spell</button>
+<textArea id="spellArea"></textarea>
+</div>
+</body>
+</html>
+
